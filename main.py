@@ -6,8 +6,20 @@ from models import (
     pay,
     list_arrears,
     monthly_income,
-    VALID_COURSE_TYPES,
+    validate_month_format,
+    CourseType,
 )
+
+
+VALID_COURSE_TYPES = [ct.value for ct in CourseType]
+
+
+def month_type(month_str):
+    try:
+        validate_month_format(month_str)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e))
+    return month_str
 
 
 def main():
@@ -52,7 +64,7 @@ def main():
 
     income_parser = subparsers.add_parser("monthly-income", help="某月各课程缴费收入")
     income_parser.add_argument(
-        "--month", required=True, help="月份（格式: YYYY-MM）"
+        "--month", required=True, type=month_type, help="月份（格式: YYYY-MM）"
     )
 
     args = parser.parse_args()

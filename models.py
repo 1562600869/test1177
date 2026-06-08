@@ -1,13 +1,35 @@
+import re
+from enum import Enum
 from storage import load_data, save_data
 
 
-VALID_COURSE_TYPES = ["艺术", "音乐", "舞蹈", "健身", "手工", "其他"]
+class CourseType(Enum):
+    ART = "艺术"
+    MUSIC = "音乐"
+    DANCE = "舞蹈"
+    FITNESS = "健身"
+    CRAFT = "手工"
+    OTHER = "其他"
+
+
+VALID_COURSE_TYPES = [ct.value for ct in CourseType]
+
+MONTH_PATTERN = re.compile(r"^\d{4}-\d{2}$")
 
 
 def validate_course_type(course_type):
-    if course_type not in VALID_COURSE_TYPES:
+    try:
+        CourseType(course_type)
+    except ValueError:
         raise ValueError(
             f"课程类型必须是以下之一: {', '.join(VALID_COURSE_TYPES)}"
+        )
+
+
+def validate_month_format(month):
+    if not MONTH_PATTERN.match(month):
+        raise ValueError(
+            f"月份格式错误，必须为 YYYY-MM 格式，例如: 2024-03"
         )
 
 
@@ -43,8 +65,10 @@ def enroll(course_name, student_name, phone):
     course = data["courses"][course_name]
     enrollments = data["enrollments"][course_name]
 
+    enrollment_key = f"{phone}:{course_name}"
     for enrollment in enrollments:
-        if enrollment["phone"] == phone:
+        existing_key = f"{enrollment['phone']}:{course_name}"
+        if existing_key == enrollment_key:
             raise ValueError(
                 f"{student_name} ({phone}) 已经报名了课程 '{course_name}'"
             )
@@ -120,6 +144,7 @@ def list_arrears():
 
 
 def monthly_income(month):
+    validate_month_format(month)
     data = load_data()
     result = {}
 
